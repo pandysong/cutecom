@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+import serial
+import sys
+import threading
+import readchar
+import termios
+
+
+fd = sys.stdin.fileno()
+old = termios.tcgetattr(fd)
+new = old
+new[3] = new[3] & ~termios.ECHO & ~termios.ECHONL
+termios.tcsetattr(fd, termios.TCSADRAIN, new)
+
+desc = "A simple serial console\n\n"
+
+if len(sys.argv) < 3:
+    print(desc +
+          "Use: cutecom tty_device baudrate [output_file_name]\n"
+          "  tty_device: /dev/your_tty_device\n"
+          "  baudrate: 115200, 1500000, or others\n\n"
+          "Options:\n"
+          "output_file_name: save the printing to a file\n")
+
+    exit(1)
+
+print(desc + "ctrl + a to quit\n")
+f = 0
+if len(sys.argv) > 3:
+    f = open(sys.argv[3], "w")
+
+ser = serial.Serial(sys.argv[1], sys.argv[2], timeout=1)
+exiting = False
+
+
+def inputThread():
+    global exiting
+    while 1:
+        i = readchar.readchar()
+        if i == '\x01':
+            exiting = True
+            break
+        else:
+            ser.write(i.encode('ascii'))
+
+
+inputThread = threading.Thread(target=inputThread)
+inputThread.start()
+
+while not exiting:
+    o = ser.read()
+    if len(o) > 0:
+        print(o.decode(), end='')
+        if f:
+            f.write(o.decode())
+        sys.stdout.flush()
+
+ser.close()
+if f:
+    f.close()
+
+termios.tcsetattr(fd, termios.TCSADRAIN, old)
