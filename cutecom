@@ -42,7 +42,7 @@ def inputThread():
             exiting = True
             break
         else:
-            ser.write(i.encode('ascii'))
+            ser.write(i.encode())
 
 
 inputThread = threading.Thread(target=inputThread)
