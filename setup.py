@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='driver',
-    version='1.0',
+    name='cutecom',
+    version='1.1',
     packages=find_packages(),
     scripts=['cutecom'],
 )
